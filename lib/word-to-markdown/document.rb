@@ -60,7 +60,6 @@ class WordToMarkdown
       html.gsub! /\n|\r/," "         # Remove linebreaks
       html.gsub! /“|”/, '"'          # Straighten curly double quotes
       html.gsub! /‘|’/, "'"          # Straighten curly single quotes
-      html.gsub! />\s+</, "><"       # Remove extra whitespace between tags
       html
     end
 

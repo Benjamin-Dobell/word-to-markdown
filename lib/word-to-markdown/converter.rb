@@ -19,6 +19,9 @@ class WordToMarkdown
       semanticize_font_styles!
       semanticize_headings!
 
+      # C4 Book
+      semanticize_code!
+
       # Tables
       remove_paragraphs_from_tables!
       semanticize_table_headers!
@@ -81,6 +84,25 @@ class WordToMarkdown
           node.node_name = "strong"
         elsif node.italic?
           node.node_name = "em"
+        end
+      end
+    end
+
+    def semanticize_code!
+      @document.tree.search("table").each do |table|
+        if table.search('p').detect { |p| !p.attribute('style').nil? && p.attribute('style').content.include?('background: #d9d9d9') }
+          table.search('p').each { |p| p.content = p.content + "\n" }
+          content = table.content
+          content.gsub!("\t", '')
+
+          pre = Nokogiri::XML::Node.new('pre', table.document)
+          pre.content = content
+
+          div = Nokogiri::XML::Node.new('div', table.document)
+          div['class'] = 'highlight highlight-cpp'
+          div.add_child pre
+
+          table.replace div
         end
       end
     end
