@@ -11,16 +11,18 @@ class WordToMarkdown
 
     def initialize(document)
       @document = document
+      @front_matter_index = 0
     end
 
     def convert!
 
+      # C4 Book
+      generate_front_matter!
+      semanticize_code!
+
       # Fonts and headings
       semanticize_font_styles!
       semanticize_headings!
-
-      # C4 Book
-      semanticize_code!
 
       # Tables
       remove_paragraphs_from_tables!
@@ -85,6 +87,21 @@ class WordToMarkdown
         elsif node.italic?
           node.node_name = "em"
         end
+      end
+    end
+
+    def generate_front_matter!
+      @document.tree.xpath('//p[contains(@style, \'background: #4f81bd\') and @align=\'center\' and descendant::font[contains(@style, \'font-size: 26pt\')] and descendant::font[contains(@style, \'font-size: 48pt\')]]').each do |chapter_header|
+        chapter = chapter_header.xpath('//font[contains(@style, \'font-size: 26pt\')]//text()').reduce('') { |text, elem| text + elem.text }
+        chapter_short_title = chapter_header.xpath('//font[contains(@style, \'font-size: 48pt\')]').reduce('') { |text, elem| text + elem.text }
+        title = "#{chapter} - #{chapter_short_title}"
+
+        placeholder = "$%%$FRONTMATTER:#{@front_matter_index}$%%$"
+        @front_matter_index = @front_matter_index + 1
+
+        @document.add_front_matter placeholder, title: title
+
+        chapter_header.replace Nokogiri::XML::Text::new(placeholder, chapter_header.document)
       end
     end
 

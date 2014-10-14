@@ -10,6 +10,14 @@ class WordToMarkdown
       raise NotFoundError, "File #{@path} does not exist" unless File.exist?(@path)
     end
 
+    def front_matters
+      @front_matters ||= {}
+    end
+
+    def add_front_matter(placeholder, values)
+      front_matters[placeholder] = values
+    end
+
     def extension
       File.extname path
     end
@@ -30,6 +38,14 @@ class WordToMarkdown
     # Returns the markdown representation of the document
     def to_s
       @markdown ||= scrub_whitespace(ReverseMarkdown.convert(html, WordToMarkdown::REVERSE_MARKDOWN_OPTIONS))
+
+      front_matters.each do |key, values|
+        content = values.reduce("---\n") { |memo, (key, value)| memo + "#{key}: #{value}\n" }
+        content = content + "---\n\n"
+        @markdown.sub!(key, content)
+      end
+
+      @markdown
     end
 
     # Determine the document encoding
